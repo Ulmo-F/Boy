@@ -1,7 +1,7 @@
 A = atan(0.75); // 36.81°
 B = (270 - A) / 2; // 116.57°
 
-fn=100;
+fn=50;
 $fn=fn;
 
 //r   ..  r+d
@@ -10,37 +10,39 @@ $fn=fn;
 width = 0.8;
 r = 6;
 
+overlap = 0.5;
+
 R = 2 * r + width;
 
 sp_r = r * (1+2*sqrt(5)) + width * sqrt(5);
 
 
-module sector(radius, angles) {
-    r = radius / cos(180 / fn);
-    step = -360 / fn;
-
-    points = concat([[0, 0]],
-        [for(a = [angles[0] : step : angles[1] - 360]) 
-            [r * cos(a), r * sin(a)]
-        ],
-        [[r * cos(angles[1]), r * sin(angles[1])]]
-    );
-
+module arc(radius, angles) {
     difference() {
+        circle(radius + width, $fn = fn);
         circle(radius, $fn = fn);
-        polygon(points);
+        sector_to_cut(radius + width, angles);
+    };
+}
+
+module sector_to_cut(radius, angles) {
+    if (angles[1]-angles[0] <= 180)
+    {
+        union() {
+            rotate(angles[0], [0, 0, 1]) translate([0, -2*radius - overlap, 0]) square(size =  4*radius    , center = true);
+            rotate(angles[1], [0, 0, 1]) translate([0, 2*radius + overlap,0]) square(size =  4*radius    , center = true);
+        };
+    } else {
+        intersection() {
+            rotate(angles[0], [0, 0, 1]) translate([0, -radius - overlap, 0]) square(size = 2*radius    , center = true);
+            rotate(angles[1], [0, 0, 1]) translate([0, radius + overlap,0]) square(size = 2*radius    , center = true);
+        };
     }
 }
 
-module arc(radius, angles) {
-    difference() {
-        sector(radius + width, angles);
-        sector(radius, angles);
-    }
-} 
-
 module torus(outer_radius, outer_angle, inner_radius, inner_angles) {
-        rotate_extrude(angle=outer_angle)
+    rotate(overlap / outer_radius, [0, 0, 1])
+        rotate_extrude(angle=outer_angle + 2*overlap/outer_radius)
             translate([outer_radius, 0, 0])
                 arc(inner_radius, inner_angles);
 }
@@ -90,26 +92,31 @@ module cone_red() {
 }
 
 module purple() {
-    color([1, 0, 1]) translate([0, 0, -R])
-        linear_extrude(height=R)
+    color([1, 0, 1]) translate([0, 0, -R - overlap])
+        linear_extrude(height=R + 2*overlap)
             arc(radius = r, angles = [0, 270]);
 }
 
 module plate() {
     translate([R, 0, r])
     rotate(90, [0, 0, 1])
-        linear_extrude(height=width) {
-            difference() {
+    linear_extrude(height=width) {
+        difference() {
+            intersection() {
                 union() {
                     circle(R);
-                    square(R, R);
-                    translate([0, R, 0]) sector(2*R, [-45, -90]);
+                    square(R);
+                    translate([0, -R]) square([2*R, R]);
                 };
-                translate([2*R, 0, 0]) circle(R);
-                circle(r+width);
-                square(r+width);
+                translate([0, R]) circle(2*R);
             };
-        }
+            translate([2*R, 0]) circle(R);
+
+            // hole for pipe
+            circle(r+width-overlap);
+            square(r+width-overlap);
+        };
+    }
 }
 
 module tuyeau() {
@@ -169,12 +176,7 @@ module boy() {
     chapeau();
 }
 
-rotate(180-atan(1/sqrt(2)), [0, 1, 0])
-rotate(45, [1, 0, 0])
-//multmatrix(m = [ [ 1,  1,  1, 0]/sqrt(3),
-//                 [ 0, -1,  0, 0]/sqrt(2),
-//                 [ 1,  1, -2, 0]/sqrt(6),
-//                 [ 0,  0,  0, 1]])
+rotate(180-atan(1/sqrt(2)), [0, 1, 0]) rotate(45, [1, 0, 0])
     boy();
 
 //1 1 1
@@ -195,3 +197,7 @@ rotate(45, [1, 0, 0])
 //1 1 1
 //1 -1 0
 //1 1 -2
+//translate([0, 0, 2]) arc(1, [45, 270]);
+//sector_to_cut(R, [0, 360]);
+//tuyeau();
+//boy();
