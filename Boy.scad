@@ -1,7 +1,7 @@
 A = atan(0.75); // 36.81°
 B = (270 - A) / 2; // 116.57°
 
-fn=50;
+fn=100;
 $fn=fn;
 
 //r   ..  r+d
@@ -10,7 +10,7 @@ $fn=fn;
 width = 0.8;
 r = 6;
 
-overlap = 0.5;
+overlap = 0.01;
 
 R = 2 * r + width;
 
@@ -64,10 +64,10 @@ module cone_yellow() {
     translate([-R, 0, 0]) rotate(-A, [0, 1, 0]) translate([R, 0, 0])
     rotate(180, [0, 0, 1])
     union() {
-        cylinder(h=R, r1 = R, r2 = 1.5*R);
+        cylinder(h=R, r1 = R - overlap/1.5, r2 = 1.5*R- overlap/1.5);
         difference() {
             cube(10*R, center = true);
-            cube(5*R);
+            cube(5.01*R);
         }
     }
 }
@@ -98,8 +98,8 @@ module purple() {
 }
 
 module plate() {
-    translate([R, 0, r])
-    rotate(90, [0, 0, 1])
+    translate([0, 0, r-R])
+    rotate(-90, [0, 0, 1])
     linear_extrude(height=width) {
         difference() {
             intersection() {
@@ -125,11 +125,10 @@ module tuyeau() {
             pastel_green();
             yellow();
             purple();
+    plate();
         }
         saturated_green();
     red();
-
-    plate();
 }
 
 module chapeau_1() {
@@ -172,7 +171,7 @@ module boy() {
     tuyeau();
     rotate(120, [1, 1, 1]) tuyeau();
     rotate(-120, [1, 1, 1]) tuyeau();
-    //rotate(180, [1, 1, 1]) tuyeau();
+//    rotate(180, [1, 1, 1]) tuyeau();
     chapeau();
 }
 
@@ -197,7 +196,3 @@ rotate(180-atan(1/sqrt(2)), [0, 1, 0]) rotate(45, [1, 0, 0])
 //1 1 1
 //1 -1 0
 //1 1 -2
-//translate([0, 0, 2]) arc(1, [45, 270]);
-//sector_to_cut(R, [0, 360]);
-//tuyeau();
-//boy();
